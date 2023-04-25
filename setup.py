@@ -24,7 +24,7 @@ from setuptools import (
 
 py_version = platform.python_version()
 
-PACKAGE_VERSION = "3.1.6"
+PACKAGE_VERSION = "3.1.7"
 
 EXTRAS_REQUIRE = {
     "tester": ["coverage", "pep8", "pyflakes", "pylint", "pytest-cov"],
