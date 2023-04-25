@@ -450,7 +450,7 @@ class Trx(Module):
 
         return result
 
-    def freeze_balance(self, amount=0, duration=3, resource="BANDWIDTH", account=None):
+    def freeze_balance(self, amount=0, resource="BANDWIDTH", account=None):
         """
         Freezes an amount of TRX.
         Will give bandwidth OR Energy and TRON Power(voting rights)
@@ -468,42 +468,14 @@ class Trx(Module):
             account = self.tron.default_address.hex
 
         transaction = self.tron.transaction_builder.freeze_balance(
-            amount, duration, resource, account
+            amount, resource, account
         )
         sign = self.sign(transaction)
         response = self.broadcast(sign)
 
         return response
 
-    def freeze_balance_for_other(
-        self, amount=0, duration=3, resource="BANDWIDTH", receiver=None, account=None
-    ):
-        """
-        Freezes an amount of TRX.
-        Will give bandwidth OR Energy and TRON Power(voting rights)
-        to the owner of the frozen tokens.
-
-        Args:
-            amount (int): number of frozen trx
-            duration (int): duration in days to be frozen
-            resource (str): type of resource, must be either "ENERGY" or "BANDWIDTH"
-            account (str): address that is freezing trx account
-            receiver (str): address that will get the resource after freezing
-
-        """
-
-        if account is None:
-            account = self.tron.default_address.hex
-
-        transaction = self.tron.transaction_builder.freeze_balance_for_other(
-            amount, duration, resource, receiver, account
-        )
-        sign = self.sign(transaction)
-        response = self.broadcast(sign)
-
-        return response
-
-    def unfreeze_balance(self, resource="BANDWIDTH", account=None):
+    def unfreeze_balance(self, amount=0, resource="BANDWIDTH", account=None):
         """
         Unfreeze TRX that has passed the minimum freeze duration.
         Unfreezing will remove bandwidth and TRON Power.
@@ -517,7 +489,64 @@ class Trx(Module):
         if account is None:
             account = self.tron.default_address.hex
 
-        transaction = self.tron.transaction_builder.unfreeze_balance(resource, account)
+        transaction = self.tron.transaction_builder.unfreeze_balance(
+            amount, resource, account
+        )
+        sign = self.sign(transaction)
+        response = self.broadcast(sign)
+
+        return response
+
+    def delegate_resource(
+        self, amount=0, resource="BANDWIDTH", receiver=None, lock=False, account=None
+    ):
+        """
+        Delegate resource to another account.
+        Will give bandwidth OR Energy and TRON Power(voting rights)
+        to the receiver of the frozen tokens.
+
+        Args:
+            amount (int): number of frozen trx
+            resource (str): type of resource, must be either "ENERGY" or "BANDWIDTH"
+            receiver (str): address that will receive the resource
+            lock (int): whether to lock the resource
+            account (str): address that owns the resource
+
+        """
+
+        if account is None:
+            account = self.tron.default_address.hex
+
+        transaction = self.tron.transaction_builder.delegate_resource(
+            amount, resource, receiver, lock, account
+        )
+        sign = self.sign(transaction)
+        response = self.broadcast(sign)
+
+        return response
+
+    def undelegate_resource(
+        self, amount=0, resource="BANDWIDTH", receiver=None, account=None
+    ):
+        """
+        Undelegate resource to another account.
+        Will get back bandwidth OR Energy and TRON Power(voting rights)
+        from the receiver of the frozen tokens.
+
+        Args:
+            amount (int): number of frozen trx
+            resource (str): type of resource, must be either "ENERGY" or "BANDWIDTH"
+            receiver (str): address that received the resource
+            account (str): address that owns the resource
+
+        """
+
+        if account is None:
+            account = self.tron.default_address.hex
+
+        transaction = self.tron.transaction_builder.undelegate_resource(
+            amount, resource, receiver, account
+        )
         sign = self.sign(transaction)
         response = self.broadcast(sign)
 

@@ -113,7 +113,7 @@ class TransactionBuilder(object):
             },
         )
 
-    def freeze_balance(self, amount, duration, resource, account=None):
+    def freeze_balance(self, amount, resource, account=None):
         """
         Freezes an amount of TRX.
         Will give bandwidth OR Energy and TRON Power(voting rights)
@@ -142,18 +142,14 @@ class TransactionBuilder(object):
         if not is_integer(amount) or amount <= 0:
             raise InvalidTronError("Invalid amount provided")
 
-        if not is_integer(duration) or duration < 3:
-            raise InvalidTronError("Invalid duration provided, minimum of 3 days")
-
         if not self.tron.isAddress(account):
             raise InvalidTronError("Invalid address provided")
 
         response = self.tron.manager.request(
-            "/wallet/freezebalance",
+            "/wallet/freezebalancev2",
             {
                 "owner_address": self.tron.address.to_hex(account),
                 "frozen_balance": self.tron.toSun(amount),
-                "frozen_duration": int(duration),
                 "resource": resource,
             },
         )
@@ -163,64 +159,7 @@ class TransactionBuilder(object):
 
         return response
 
-    def freeze_balance_for_other(
-        self, amount, duration, resource, receiver, account=None
-    ):
-        """
-        Freezes an amount of TRX.
-        Will give bandwidth OR Energy and TRON Power(voting rights)
-        to the owner of the frozen tokens.
-
-        Args:
-            amount (int): number of frozen trx
-            duration (int): duration in days to be frozen
-            resource (str): type of resource, must be either "ENERGY" or "BANDWIDTH"
-            account (str): address that is freezing trx account
-            receiver (str): address that will get the resource after freezing
-
-        """
-
-        # If the address of the sender is not specified, we prescribe the default
-        if account is None:
-            account = self.tron.default_address.hex
-
-        if resource not in (
-            "BANDWIDTH",
-            "ENERGY",
-        ):
-            raise InvalidTronError(
-                'Invalid resource provided: Expected "BANDWIDTH" or "ENERGY"'
-            )
-
-        if not is_integer(amount) or amount <= 0:
-            raise InvalidTronError("Invalid amount provided")
-
-        if not is_integer(duration) or duration < 3:
-            raise InvalidTronError("Invalid duration provided, minimum of 3 days")
-
-        if not self.tron.isAddress(account):
-            raise InvalidTronError("Invalid address provided")
-
-        if not self.tron.isAddress(receiver):
-            raise InvalidTronError("Invalid receiver address provided")
-
-        response = self.tron.manager.request(
-            "/wallet/freezebalance",
-            {
-                "owner_address": self.tron.address.to_hex(account),
-                "frozen_balance": self.tron.toSun(amount),
-                "frozen_duration": int(duration),
-                "resource": resource,
-                "receiver_address": self.tron.address.to_hex(receiver),
-            },
-        )
-
-        if "Error" in response:
-            raise TronError(response["Error"])
-
-        return response
-
-    def unfreeze_balance(self, resource="BANDWIDTH", account=None):
+    def unfreeze_balance(self, amount=0, resource="BANDWIDTH", account=None):
         """
         Unfreeze TRX that has passed the minimum freeze duration.
         Unfreezing will remove bandwidth and TRON Power.
@@ -247,12 +186,121 @@ class TransactionBuilder(object):
             raise InvalidTronError("Invalid address provided")
 
         response = self.tron.manager.request(
-            "/wallet/unfreezebalance",
-            {"owner_address": self.tron.address.to_hex(account), "resource": resource},
+            "/wallet/unfreezebalancev2",
+            {
+                "owner_address": self.tron.address.to_hex(account),
+                "unfreeze_balance": amount,
+                "resource": resource,
+            },
         )
 
         if "Error" in response:
             raise ValueError(response["Error"])
+
+        return response
+
+    def delegate_resource(
+        self, amount=0, resource="BANDWIDTH", receiver=None, lock=False, account=None
+    ):
+        """
+        Delegate resource to another account.
+        Will give bandwidth OR Energy and TRON Power(voting rights)
+        to the receiver of the frozen tokens.
+
+        Args:
+            amount (int): number of frozen trx
+            resource (str): type of resource, must be either "ENERGY" or "BANDWIDTH"
+            receiver (str): address that will receive the resource
+            lock (int): whether to lock the resource
+            account (str): address that owns the resource
+
+        """
+        if account is None:
+            account = self.tron.default_address.hex
+
+        if resource not in (
+            "BANDWIDTH",
+            "ENERGY",
+        ):
+            raise InvalidTronError(
+                'Invalid resource provided: Expected "BANDWIDTH" or "ENERGY"'
+            )
+
+        if not is_integer(amount) or amount <= 0:
+            raise InvalidTronError("Invalid amount provided")
+
+        if not self.tron.isAddress(account):
+            raise InvalidTronError("Invalid sender address provided")
+
+        if not self.tron.isAddress(receiver):
+            raise InvalidTronError("Invalid receiver address provided")
+
+        if not is_boolean(lock):
+            raise InvalidTronError("Invalid lock provided")
+
+        response = self.tron.manager.request(
+            "/wallet/delegateresource",
+            {
+                "owner_address": self.tron.address.to_hex(account),
+                "receiver_address": self.tron.address.to_hex(receiver),
+                "balance": self.tron.toSun(amount),
+                "resource": resource,
+                "lock": lock,
+            },
+        )
+
+        if "Error" in response:
+            raise TronError(response["Error"])
+
+        return response
+
+    def undelegate_resource(
+        self, amount=0, resource="BANDWIDTH", receiver=None, account=None
+    ):
+        """
+        Undelegate resource to another account.
+        Will get back bandwidth OR Energy and TRON Power(voting rights)
+        from the receiver of the frozen tokens.
+
+        Args:
+            amount (int): number of frozen trx
+            resource (str): type of resource, must be either "ENERGY" or "BANDWIDTH"
+            receiver (str): address that received the resource
+            account (str): address that owns the resource
+
+        """
+        if account is None:
+            account = self.tron.default_address.hex
+
+        if resource not in (
+            "BANDWIDTH",
+            "ENERGY",
+        ):
+            raise InvalidTronError(
+                'Invalid resource provided: Expected "BANDWIDTH" or "ENERGY"'
+            )
+
+        if not is_integer(amount) or amount <= 0:
+            raise InvalidTronError("Invalid amount provided")
+
+        if not self.tron.isAddress(account):
+            raise InvalidTronError("Invalid sender address provided")
+
+        if not self.tron.isAddress(receiver):
+            raise InvalidTronError("Invalid receiver address provided")
+
+        response = self.tron.manager.request(
+            "/wallet/undelegateresource",
+            {
+                "owner_address": self.tron.address.to_hex(account),
+                "receiver_address": self.tron.address.to_hex(receiver),
+                "balance": self.tron.toSun(amount),
+                "resource": resource,
+            },
+        )
+
+        if "Error" in response:
+            raise TronError(response["Error"])
 
         return response
 

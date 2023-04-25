@@ -32,7 +32,7 @@ You can install it in a system-wide location via pip:
 
 .. code-block:: bash
 
-    sudo pip3 install tronapi
+    sudo pip3 install tronapi-JCO
 
 Or install it locally using `virtualenv <https://github.com/pypa/virtualenv>`__:
 

@@ -16,11 +16,11 @@ if sys.version_info < (3, 5):
     raise EnvironmentError("Python 3.5 or above is required")
 
 
-__version__ = pkg_resources.get_distribution("tronapi").version
+__version__ = pkg_resources.get_distribution("tronapi-JCO").version
 
 __all__ = [
-    '__version__',
-    'HttpProvider',
-    'Account',
-    'Tron',
+    "__version__",
+    "HttpProvider",
+    "Account",
+    "Tron",
 ]
