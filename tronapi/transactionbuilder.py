@@ -43,7 +43,8 @@ class TransactionBuilder(object):
             raise InvalidTronError("Invalid recipient address provided")
 
         if not isinstance(amount, float) or amount <= 0:
-            raise InvalidTronError("Invalid amount provided")
+            if not isinstance(amount, int) or amount <= 0:
+                raise InvalidTronError("Invalid amount provided")
 
         _to = self.tron.address.to_hex(to)
         _from = self.tron.address.to_hex(account)
@@ -1251,3 +1252,173 @@ class TransactionBuilder(object):
                 data["actives"] = actives_permissions
 
         return self.tron.manager.request("wallet/accountpermissionupdate", data)
+
+    def estimate_energy(self, **kwargs):
+        """Trigger Smart Contract
+                Estimate energy to call a function on a contract
+
+                Args:
+                    **kwargs: Fill in the required parameters
+
+                Examples:
+                    >>> tron = Tron()
+                    >>> tron.transaction_builder.estimate_energy(
+                    >>>     contract_address='413c8143e98b3e2fe1b1a8fb82b34557505a752390',
+                    >>>     function_selector='set(uint256,uint256)',
+                    >>>     parameters=[
+                    >>>        {'type': 'int256', 'value': 1},
+                    >>>        {'type': 'int256', 'value': 1}
+            ]
+        )
+
+                Returns:
+                    TransactionExtention, TransactionExtention contains unsigned Transaction
+        """
+
+        contract_address = kwargs.setdefault("contract_address", None)
+        function_selector = kwargs.setdefault("function_selector", None)
+        parameters = kwargs.setdefault("parameters", [])
+        issuer_address = kwargs.setdefault(
+            "issuer_address", self.tron.default_address.hex
+        )
+        call_value = kwargs.setdefault("call_value", 0)
+        fee_limit = kwargs.setdefault("fee_limit", 1000000000)
+        token_value = kwargs.setdefault("token_value", 0)
+        token_id = kwargs.setdefault("token_id", 0)
+
+        if not is_integer(token_value) or token_value < 0:
+            raise ValueError("Invalid options.tokenValue provided")
+
+        if not is_integer(token_id) or token_id < 0:
+            raise ValueError("Invalid options.tokenId provided")
+
+        if not self.tron.isAddress(contract_address):
+            raise InvalidAddress("Invalid contract address provided")
+
+        if not is_string(function_selector):
+            raise ValueError("Invalid function selector provided")
+
+        function_selector = function_selector.replace("/\s*/g", "")
+
+        if len(parameters) > 0:
+            types = []
+            values = []
+            for abi in parameters:
+                if "type" not in abi or not is_string(abi["type"]):
+                    raise ValueError("Invalid parameter type provided: " + abi["type"])
+
+                if abi["type"] == "address":
+                    abi["value"] = self.tron.address.to_hex(abi["value"]).replace(
+                        "41", "0x", 1
+                    )
+
+                types.append(abi["type"])
+                values.append(abi["value"])
+
+            try:
+                parameters = encode_hex(encode_abi(types, values)).replace("0x", "", 2)
+            except ValueError as ex:
+                print(ex)
+
+        else:
+            parameters = ""
+
+        data = {
+            "contract_address": self.tron.address.to_hex(contract_address),
+            "owner_address": self.tron.address.to_hex(issuer_address),
+            "function_selector": function_selector,
+            "parameter": parameters,
+        }
+
+        if token_value:
+            data["call_token_value"] = int(token_value)
+
+        if token_id:
+            data["token_id"] = int(token_id)
+
+        return self.tron.manager.request("/wallet/estimateenergy", data)
+
+    def trigger_constant_contract(self, **kwargs):
+        """Trigger Constant Function of a Contract
+                Estimate energy to call a function on a contract
+
+                Args:
+                    **kwargs: Fill in the required parameters
+
+                Examples:
+                    >>> tron = Tron()
+                    >>> tron.transaction_builder.estimate_energy(
+                    >>>     contract_address='413c8143e98b3e2fe1b1a8fb82b34557505a752390',
+                    >>>     function_selector='set(uint256,uint256)',
+                    >>>     parameters=[
+                    >>>        {'type': 'int256', 'value': 1},
+                    >>>        {'type': 'int256', 'value': 1}
+            ]
+        )
+
+                Returns:
+                    TransactionExtention, TransactionExtention contains unsigned Transaction
+        """
+
+        contract_address = kwargs.setdefault("contract_address", None)
+        function_selector = kwargs.setdefault("function_selector", None)
+        parameters = kwargs.setdefault("parameters", [])
+        issuer_address = kwargs.setdefault(
+            "issuer_address", self.tron.default_address.hex
+        )
+        call_value = kwargs.setdefault("call_value", 0)
+        fee_limit = kwargs.setdefault("fee_limit", 1000000000)
+        token_value = kwargs.setdefault("token_value", 0)
+        token_id = kwargs.setdefault("token_id", 0)
+
+        if not is_integer(token_value) or token_value < 0:
+            raise ValueError("Invalid options.tokenValue provided")
+
+        if not is_integer(token_id) or token_id < 0:
+            raise ValueError("Invalid options.tokenId provided")
+
+        if not self.tron.isAddress(contract_address):
+            raise InvalidAddress("Invalid contract address provided")
+
+        if not is_string(function_selector):
+            raise ValueError("Invalid function selector provided")
+
+        function_selector = function_selector.replace("/\s*/g", "")
+
+        if len(parameters) > 0:
+            types = []
+            values = []
+            for abi in parameters:
+                if "type" not in abi or not is_string(abi["type"]):
+                    raise ValueError("Invalid parameter type provided: " + abi["type"])
+
+                if abi["type"] == "address":
+                    abi["value"] = self.tron.address.to_hex(abi["value"]).replace(
+                        "41", "0x", 1
+                    )
+
+                types.append(abi["type"])
+                values.append(abi["value"])
+
+            try:
+                parameters = encode_hex(encode_abi(types, values)).replace("0x", "", 2)
+            except ValueError as ex:
+                print(ex)
+
+        else:
+            parameters = ""
+
+        data = {
+            "contract_address": self.tron.address.to_hex(contract_address),
+            "owner_address": self.tron.address.to_hex(issuer_address),
+            "function_selector": function_selector,
+            "parameter": parameters,
+        }
+
+        if token_value:
+            data["call_token_value"] = int(token_value)
+
+        if token_id:
+            data["token_id"] = int(token_id)
+
+        return self.tron.manager.request("/wallet/triggerconstantcontract", data)

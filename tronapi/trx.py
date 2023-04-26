@@ -1085,3 +1085,8 @@ class Trx(Module):
         return self.tron.manager.request(
             "/wallet/getassetissuebyid", {"value": token_id}
         )
+
+    def get_energy_prices(self):
+        """Get Energy Prices."""
+
+        return self.tron.manager.request("/wallet/getenergyprices")
