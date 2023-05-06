@@ -517,6 +517,27 @@ class Trx(Module):
 
         return response
 
+    def get_can_withdraw_unfreeze_amount(self, account=None):
+        """
+        Get amount of available unfreeze amount to withdraw in Stake2.0.
+        the user can call this API to know how much funds they can get back.
+
+        Args:
+            account (str): address that owns the staked trx
+
+        """
+
+        if account is None:
+            account = self.tron.default_address.hex
+
+        transaction = self.tron.transaction_builder.get_can_withdraw_unfreeze_amount(
+            account
+        )
+        sign = self.sign(transaction)
+        response = self.broadcast(sign)
+
+        return response
+
     def delegate_resource(
         self, amount=0, resource="BANDWIDTH", receiver=None, lock=False, account=None
     ):

@@ -5,6 +5,7 @@
 # --------------------------------------------------------------------
 
 from datetime import datetime
+import time
 from typing import Any, Tuple, List
 
 from eth_abi import encode_abi
@@ -220,6 +221,34 @@ class TransactionBuilder(object):
             "/wallet/withdrawexpireunfreeze",
             {
                 "owner_address": self.tron.address.to_hex(account),
+            },
+        )
+
+        if "Error" in response:
+            raise ValueError(response["Error"])
+
+        return response
+
+    def get_can_withdraw_unfreeze_amount(self, account=None):
+        """
+        Get amount of available unfreeze amount to withdraw in Stake2.0.
+        the user can call this API to know how much funds they can get back.
+
+        Args:
+            account (str): address that owns the staked trx
+
+        """
+        if account is None:
+            account = self.tron.default_address.hex
+
+        if not self.tron.isAddress(account):
+            raise InvalidTronError("Invalid address provided")
+
+        response = self.tron.manager.request(
+            "/wallet/getcanwithdrawunfreezeamount",
+            {
+                "owner_address": self.tron.address.to_hex(account),
+                "timestamp": str(round(time.time() * 1000)),
             },
         )
 
